@@ -40,18 +40,26 @@ async function appendToSheet(data, type = 'placement') {
         "PHONE NUMBER": data.hr_phone ? `'${data.hr_phone}` : ""
       };
     } else {
-      // ORDER FOR CARDS (MATCHING YOUR SCREENSHOT):
-      // A: DATE, B: NAME, C: DESIGNATION, D: COMPANY, E: EMAIL, F: PHONE NO, G: WEBSITE, H: ADDRESS, I: CARD TYPE
+      // NEW ORDER FOR CARDS (MATCHING USER REQUEST):
+      // A: S.NO, B: COMPANY NAME, C: PERSON NAME, D: DESIGNATION, E: PHONE NO 1, F: PHONE NO 2, G: PHONE NO 3, H: EMAIL ID 1, I: EMAIL ID 2, J: WEBSITE LINK, K: ADDRESS/LOCATION, L: INDUSTRY, M: OTHERS
+      
+      const phones = data.phones || [];
+      const emails = data.emails || [];
+
       payload = {
-        "DATE": dateStr,
-        "NAME": data.name || "",
+        "S.NO": "", 
+        "COMPANT NAME": data.company_name || "",
+        "PERSON NAME": data.name || "",
         "DESIGNATION": data.designation || "",
-        "COMPANY": data.company_name || "",
-        "EMAIL": data.email || "",
-        "PHONE NO": data.phone ? `'${data.phone}` : "",
-        "WEBSITE": data.website || "",
-        "ADDRESS": data.address || "",
-        "CARD TYPE": data.card_type || ""
+        "PHONE NO 1": phones[0] ? `'${phones[0]}` : "nil",
+        "PHONE 2": phones[1] ? `'${phones[1]}` : "nil",
+        "PHONE NO 3": phones[2] ? `'${phones[2]}` : "nil",
+        "EMAIL ID 1": emails[0] || "nil",
+        "EMAIL ID 2": emails[1] || "nil",
+        "WEBSITE LINK": data.website || "nil",
+        "ADDRESS/LOCATION": data.address || "",
+        "INDUSTRY": data.industry || "General",
+        "OTHERS": data.others || "-"
       };
     }
 

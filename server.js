@@ -74,19 +74,22 @@ const CARD_SYSTEM_INSTRUCTIONS = `Analyze this Registration Card or Visiting Car
   "name": "string",
   "designation": "string",
   "company_name": "string",
-  "email": "string",
-  "phone": "string",
+  "emails": ["string"],
+  "phones": ["string"],
   "website": "string",
   "address": "string",
+  "industry": "string (e.g., Financial, Real Estate, Paintings, Tech, etc.)",
+  "others": "string (any extra details like GST, services, etc.)",
   "card_type": "Registration" | "Visiting"
 }
 
 CRITICAL RULES:
 1. Extract the person's name, their designation/role, and the company they represent.
-2. Ensure phone and email are captured accurately.
-3. Capture the FULL address as found on the card. Do not omit street details or city names.
-4. Determine if it is a "Registration" card or a "Visiting" card.
-5. Return ONLY the JSON object. No conversation.`;
+2. Industry: Automatically determine the industry. IMPORTANT: If the business name or card content mentions a specific trade (e.g., Painting, Studio, Boutique, Printing, Signage), you MUST include those specific keywords in the industry field. Do not just use broad terms if a specific one is visible.
+3. Multiple Details: Extract ALL phone numbers and emails. Place them in the "phones" and "emails" arrays respectively.
+4. Others: Any details found on the card that don't fit the specific fields (like GSTIN, Slogan, specific services, branches) must be summarized in the "others" field.
+5. Capture the FULL address as found on the card.
+6. Return ONLY the JSON object. No conversation.`;
 
 // --- ROUTES ---
 
@@ -202,6 +205,14 @@ app.post('/api/analyze-card', upload.single('file'), async (req, res) => {
     
     await appendToSheet(extraction, sheetType);
 
+    // Save to Local Database for History
+    const db = getDb();
+    const displayName = extraction.company_name || extraction.name || "Unknown Card";
+    await db.prepare(`
+      INSERT INTO placements (id, image_path, company_name, extracted_data)
+      VALUES ($1, $2, $3, $4)
+    `).run([id, imagePath, displayName, JSON.stringify(extraction)]);
+
     res.json({ 
       id, 
       extraction, 
@@ -221,6 +232,7 @@ app.get('/api/placements', async (req, res) => {
     const placements = await db.prepare("SELECT * FROM placements ORDER BY created_at DESC").all();
     res.json(placements);
   } catch (error) {
+    console.error("Fetch history error:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -306,6 +318,25 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ reply });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. Delete Placement (Local Only)
+app.delete('/api/placements/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getDb();
+    
+    // 1. Delete associated messages
+    await db.prepare("DELETE FROM messages WHERE placement_id = $1").run([id]);
+    
+    // 2. Delete the placement record
+    await db.prepare("DELETE FROM placements WHERE id = $1").run([id]);
+    
+    res.json({ success: true, message: "Record deleted from local history." });
+  } catch (error) {
+    console.error("Delete error:", error);
     res.status(500).json({ error: error.message });
   }
 });

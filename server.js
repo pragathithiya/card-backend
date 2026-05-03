@@ -73,30 +73,34 @@ CRITICAL RULES:
 4. If text is in Tamil, translate it accurately to English for the JSON values.
 5. Return ONLY the JSON object. No conversation.`;
 
-const CARD_SYSTEM_INSTRUCTIONS = `Analyze this Registration Card or Visiting Card. The card may be in English, Tamil, or both.
-Extract the information and return data ONLY in this JSON format. If the content is in Tamil, translate the extracted values to English.
+const CARD_SYSTEM_INSTRUCTIONS = `Analyze this Registration Card or Visiting Card. The content may be in English, Tamil, or both.
+You are a bilingual expert. You MUST return the JSON in 100% English.
 
 JSON Format:
 {
-  "name": "string",
-  "designation": "string",
-  "company_name": "string",
+  "name": "string (Individual name/Owner/Manager - Phonetic English)",
+  "designation": "string (Owner/Manager/Proprietor)",
+  "company_name": "string (Main Business Name in English)",
   "emails": ["string"],
   "phones": ["string"],
   "website": "string",
-  "address": "string",
-  "industry": "string (e.g., Financial, Real Estate, Paintings, Tech, etc.)",
-  "others": "string (any extra details like GST, services, etc.)",
-  "card_type": "Registration" | "Visiting"
+  "address": "string (Complete location in English)",
+  "industry": "string (e.g., Transportation, Grocery, Tech, etc.)",
+  "others": "string (Services, Slogans, 24/7 - MUST BE IN ENGLISH)",
+  "card_type": "Visiting" | "Registration"
 }
 
-CRITICAL RULES:
-1. Person's Name: Only extract a value for "name" if it is clearly an individual's name. Do NOT use the company or shop name as the person's name. If no individual name is found, set "name" to "".
-2. Industry: Automatically determine the industry. IMPORTANT: If the business name or card content mentions a specific trade (e.g., Painting, Studio, Boutique, Printing, Signage, Rice Mandi), you MUST include those specific keywords in the industry field.
-3. Multiple Details: Extract ALL phone numbers and emails. Place them in the "phones" and "emails" arrays respectively.
-4. Others: Any details found on the card that don't fit the specific fields (like GSTIN, Slogan, specific services, branches) must be summarized in the "others" field.
-5. Capture the FULL address as found on the card.
-6. If text is in Tamil, translate it accurately to English for the JSON values (e.g., "அரிசி மண்டி" -> "Rice Mart/Mandi").
+STRICT BILINGUAL RULES:
+1. 100% ENGLISH ONLY: Every value in the JSON MUST be in English. NO TAMIL CHARACTERS.
+2. PHONETIC NAME PRECISION: Capture the FULL name. If the card says "மஸ்தான் K. மணிகண்டன்", the result MUST be "Mastan K. Manikandan". Do not truncate or shorten names.
+3. ADDRESS ACCURACY: The address is usually at the bottom. Translate Tamil place names precisely as they sound:
+   - "நிடூர் ரோடு" -> "Nidur Road"
+   - "தேவியூர்" -> "Deviyur"
+   - "சீர்காழி" -> "Sirkali"
+   - Double-check every character. Do NOT guess the city name.
+4. TOP CORNER NAMES: Look for names next to "உரிமையாளர்" (Owner) or "நிர்வாகி" (Manager) in the top corners.
+5. CARD TYPE: Business cards are always "Visiting".
+6. ZERO DATA LOSS: Include every service and detail found on the card in "others".
 7. Return ONLY the JSON object. No conversation.`;
 
 // --- ROUTES ---

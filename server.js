@@ -40,7 +40,10 @@ const upload = multer({ storage });
 // Initialize Groq
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const SYSTEM_INSTRUCTIONS = `Analyze this Job Description or Visiting Card and return data ONLY in this JSON format:
+const SYSTEM_INSTRUCTIONS = `Analyze this Job Description or Visiting Card. The content may be in English, Tamil, or both. 
+Extract the information and return data ONLY in this JSON format. If the content is in Tamil, translate the extracted values to English.
+
+JSON Format:
 {
   "company_name": "string",
   "job_role": "string",
@@ -67,9 +70,13 @@ CRITICAL RULES:
 
 2. For any other case, extract the actual values. For "mode", map it to one of: "On-site", "Remote", "Hybrid", or "Work from Home".
 3. For Visiting Cards, map the person's name to "hr_name" and their phone to "hr_phone".
-4. Return ONLY the JSON object. No conversation.`;
+4. If text is in Tamil, translate it accurately to English for the JSON values.
+5. Return ONLY the JSON object. No conversation.`;
 
-const CARD_SYSTEM_INSTRUCTIONS = `Analyze this Registration Card or Visiting Card and return data ONLY in this JSON format:
+const CARD_SYSTEM_INSTRUCTIONS = `Analyze this Registration Card or Visiting Card. The card may be in English, Tamil, or both.
+Extract the information and return data ONLY in this JSON format. If the content is in Tamil, translate the extracted values to English.
+
+JSON Format:
 {
   "name": "string",
   "designation": "string",
@@ -84,12 +91,13 @@ const CARD_SYSTEM_INSTRUCTIONS = `Analyze this Registration Card or Visiting Car
 }
 
 CRITICAL RULES:
-1. Extract the person's name, their designation/role, and the company they represent.
-2. Industry: Automatically determine the industry. IMPORTANT: If the business name or card content mentions a specific trade (e.g., Painting, Studio, Boutique, Printing, Signage), you MUST include those specific keywords in the industry field. Do not just use broad terms if a specific one is visible.
+1. Person's Name: Only extract a value for "name" if it is clearly an individual's name. Do NOT use the company or shop name as the person's name. If no individual name is found, set "name" to "".
+2. Industry: Automatically determine the industry. IMPORTANT: If the business name or card content mentions a specific trade (e.g., Painting, Studio, Boutique, Printing, Signage, Rice Mandi), you MUST include those specific keywords in the industry field.
 3. Multiple Details: Extract ALL phone numbers and emails. Place them in the "phones" and "emails" arrays respectively.
 4. Others: Any details found on the card that don't fit the specific fields (like GSTIN, Slogan, specific services, branches) must be summarized in the "others" field.
 5. Capture the FULL address as found on the card.
-6. Return ONLY the JSON object. No conversation.`;
+6. If text is in Tamil, translate it accurately to English for the JSON values (e.g., "அரிசி மண்டி" -> "Rice Mart/Mandi").
+7. Return ONLY the JSON object. No conversation.`;
 
 // --- ROUTES ---
 
